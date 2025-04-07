@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 import 'package:ticket_scanner/utils/constants.dart';
@@ -33,9 +34,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadFile() async {
     try {
+      // Check if there is already data in shared preferences
+      if (GlobalData.instance.codes.isNotEmpty) {
+        bool? confirmed = await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(LocaleData.loadFile.getString(context)),
+              content: Text(LocaleData.overwriteDataWarning.getString(context)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(LocaleData.cancel.getString(context)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(LocaleData.confirm.getString(context)),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (confirmed != true) {
+          return;
+        }
+      }
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['txt'], // Restrict to text files
+        allowedExtensions: ['', 'txt', 'csv'],
       );
 
       if (result != null && result.files.single.path != null) {
@@ -46,11 +74,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           throw Exception('File is empty');
         }
 
-        // Read the encoding type from the first line
+        // Read the encoding type from the first line and remove it
         String encoding = lines.first.trim().toLowerCase();
-        lines.removeAt(0); // Remove the first line (encoding)
+        lines.removeAt(0);
 
-        // Parse the encoding type
         switch (encoding) {
           case 'ean8':
             GlobalData.instance.encodingType = EncodingType.ean8;
@@ -75,6 +102,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         GlobalData.instance.codes = codes;
 
+        // Save the loaded data to shared preferences
+        await GlobalData.instance.saveCodes();
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -98,6 +128,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(color: textLightColour),
             ),
             backgroundColor: errorColour,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _clearData() async {
+    bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(LocaleData.clearDataTitle.getString(context)),
+          content: Text(LocaleData.clearDataWarning.getString(context)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(LocaleData.cancel.getString(context)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(LocaleData.confirm.getString(context)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear(); // Clear all shared preferences
+      GlobalData.instance.codes = [];
+      GlobalData.instance.encodingType = null;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocaleData.clearDataSuccess.getString(context),
+              style: TextStyle(color: textLightColour),
+            ),
+            backgroundColor: successColour,
           ),
         );
       }
@@ -163,11 +234,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: _loadFile,
               child: Text(LocaleData.loadFile.getString(context)),
             ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: errorColour,
+                foregroundColor: textLightColour,
+              ),
+              onPressed: _clearData,
+              child: Text(LocaleData.clearDataTitle.getString(context)),
+            ),
           ],
         ),
       ),
     );
   }
 }
-
-// List<String> codes = GlobalData.instance.codes;

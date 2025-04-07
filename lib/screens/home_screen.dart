@@ -17,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isProcessing = false;
   String? _scannedCode;
 
-  void _handleCodeVerification() {
+  void _handleCodeVerification() async {
     if (_isProcessing || _scannedCode == null) return;
 
     setState(() {
@@ -30,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (GlobalData.instance.codes.contains(code)) {
       GlobalData.instance.codes.remove(code);
+      await GlobalData.instance.saveCodes(); // Save updated codes
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -116,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           Positioned(
-            bottom: 60.0,
+            bottom: 100.0,
             left: 16.0,
             right: 16.0,
             child: ElevatedButton(

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:ticket_scanner/localisation/locales.dart';
 import 'package:ticket_scanner/utils/constants.dart';
+import 'package:ticket_scanner/utils/global_data.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await FlutterLocalization.instance.ensureInitialized();
+  await GlobalData.instance.loadCodes();
 
   runApp(const TicketScannerApp());
 }
