@@ -15,15 +15,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isProcessing = false;
+  String? _scannedCode;
 
-  void _handleCode(String code) {
-    if (_isProcessing) return;
+  void _handleCodeVerification() {
+    if (_isProcessing || _scannedCode == null) return;
 
     setState(() {
       _isProcessing = true;
     });
 
-    code = _normaliseCode(code);
+    String code = _normaliseCode(_scannedCode!);
+
+    ScaffoldMessenger.of(context).clearSnackBars(); // Clear previous snackbar
 
     if (GlobalData.instance.codes.contains(code)) {
       GlobalData.instance.codes.remove(code);
@@ -33,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SnackBar(
             content: Text(
               LocaleData.validCode.getString(context),
-              style: const TextStyle(color: textLightColour),
+              style: const TextStyle(color: textLightColour, fontSize: 20),
             ),
             backgroundColor: successColour,
           ),
@@ -45,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SnackBar(
             content: Text(
               LocaleData.invalidCode.getString(context),
-              style: const TextStyle(color: textLightColour),
+              style: const TextStyle(color: textLightColour, fontSize: 20),
             ),
             backgroundColor: errorColour,
           ),
@@ -53,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() {
           _isProcessing = false;
@@ -105,10 +108,26 @@ class _HomeScreenState extends State<HomeScreen> {
             onDetect: (capture) {
               for (final code in capture.barcodes) {
                 if (code.rawValue != null) {
-                  _handleCode(code.rawValue!);
+                  setState(() {
+                    _scannedCode = code.rawValue!;
+                  });
                 }
               }
             },
+          ),
+          Positioned(
+            bottom: 60.0,
+            left: 16.0,
+            right: 16.0,
+            child: ElevatedButton(
+              onPressed: _handleCodeVerification,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColour,
+                foregroundColor: textLightColour,
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+              ),
+              child: Text(LocaleData.scanCode.getString(context)),
+            ),
           ),
         ],
       ),
