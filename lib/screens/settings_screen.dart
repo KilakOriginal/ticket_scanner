@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
-
+import 'package:ticket_scanner/screens/login_screen.dart';
 import 'package:ticket_scanner/utils/constants.dart';
 import 'package:ticket_scanner/localisation/locales.dart';
 import 'package:ticket_scanner/utils/global_data.dart';
@@ -163,8 +164,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     if (confirmed == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear(); // Clear all shared preferences
       GlobalData.instance.codes = [];
       GlobalData.instance.encodingType = null;
 
@@ -248,32 +247,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               onPressed: () async {
                 try {
-                  GlobalData.instance.syncCodes();
-                  debugPrint('Local codes: ${GlobalData.instance.codes}');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Synchronization successful!',
-                        style: TextStyle(color: textLightColour),
+                  await GlobalData.instance.syncCodes();
+
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          LocaleData.syncSuccess.getString(context),
+                          style: TextStyle(color: textLightColour),
+                        ),
+                        backgroundColor: successColour,
                       ),
-                      backgroundColor: successColour,
-                    ),
-                  );
+                    );
+                  }
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Synchronization failed: $e',
-                        style: TextStyle(color: textLightColour),
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          LocaleData.syncError.getString(context),
+                          style: TextStyle(color: textLightColour),
+                        ),
+                        backgroundColor: errorColour,
                       ),
-                      backgroundColor: errorColour,
-                    ),
-                  );
+                    );
+                  }
                 }
               },
-              child: Text('Synchronize Codes'),
+              child: Text(LocaleData.syncPrompt.getString(context)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColour,
+                foregroundColor: textLightColour,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                );
+              },
+              child: Text(LocaleData.loginPrompt.getString(context)),
             ),
             const SizedBox(height: 32),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: errorColour,
+                foregroundColor: textLightColour,
+              ),
+              onPressed: () async {
+                await Supabase.instance.client.auth.signOut();
+                if (mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Logged out')));
+                }
+              },
+              child: Text(LocaleData.logoutPrompt.getString(context)),
+            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: errorColour,

@@ -60,9 +60,12 @@ class GlobalData {
 
   // Fetch codes from Supabase
   Future<void> fetchCodes() async {
-    try {
-      final response = await _supabase.from('codes').select();
+    final response = await _supabase.from('codes').select();
 
+    if (codes.isEmpty) {
+      codes = List<Map<String, dynamic>>.from(response);
+      debugPrint("Fetched all remote codes: ${codes.length} codes loaded.");
+    } else {
       final List<dynamic> fetchedCodes = response;
       for (var remoteCode in fetchedCodes) {
         String remoteCodeValue = remoteCode['code'];
@@ -85,51 +88,41 @@ class GlobalData {
           localCode['last_modified'] = remoteLastModifiedDate.toIso8601String();
         }
       }
-
-      await saveCodes();
-    } catch (e) {
-      debugPrint('Failed to fetch remote codes: $e');
     }
+
+    await saveCodes();
   }
 
   // Push local changes to Supabase
   Future<void> pushCodesToDatabase() async {
-    try {
-      for (var localCode in codes) {
-        // Check if the remote code exists and fetch its last_modified timestamp
-        final response =
-            await _supabase
-                .from('codes')
-                .select('last_modified')
-                .eq('code', localCode['code'])
-                .maybeSingle();
+    for (var localCode in codes) {
+      // Check if the remote code exists and fetch its last_modified timestamp
+      final response =
+          await _supabase
+              .from('codes')
+              .select('last_modified')
+              .eq('code', localCode['code'])
+              .maybeSingle();
 
-        if (response == null) {
-          // Code does not exist in the remote database, insert it
-          await _supabase.from('codes').insert(localCode);
+      if (response == null) {
+        // Code does not exist in the remote database, insert it
+        await _supabase.from('codes').insert(localCode);
+      } else {
+        DateTime remoteLastModified = DateTime.parse(response['last_modified']);
+        DateTime localLastModified = DateTime.parse(localCode['last_modified']);
+
+        if (localLastModified.isAfter(remoteLastModified)) {
+          debugPrint("Updating code ${localCode['code']}");
+          await _supabase
+              .from('codes')
+              .update(localCode)
+              .eq('code', localCode['code']);
         } else {
-          DateTime remoteLastModified = DateTime.parse(
-            response['last_modified'],
+          debugPrint(
+            "$localLastModified is not newer than $remoteLastModified for code ${localCode['code']}",
           );
-          DateTime localLastModified = DateTime.parse(
-            localCode['last_modified'],
-          );
-
-          if (localLastModified.isAfter(remoteLastModified)) {
-            debugPrint("Updating code ${localCode['code']}");
-            await _supabase
-                .from('codes')
-                .update(localCode)
-                .eq('code', localCode['code']);
-          } else {
-            debugPrint(
-              "$localLastModified is not newer than $remoteLastModified for code ${localCode['code']}",
-            );
-          }
         }
       }
-    } catch (e) {
-      debugPrint('Failed to push local codes to the database: $e');
     }
   }
 
