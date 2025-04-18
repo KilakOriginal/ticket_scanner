@@ -209,7 +209,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               LocaleData.languageLabel.getString(context),
               style: Theme.of(context).textTheme.labelMedium,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 32),
             DropdownButton<String>(
               value: _selectedLanguage,
               items:
@@ -234,7 +234,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: _loadFile,
               child: Text(LocaleData.loadFile.getString(context)),
             ),
-            const SizedBox(height: 16),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColour,
+                foregroundColor: textLightColour,
+              ),
+              onPressed: () async {
+                try {
+                  await syncCodes();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Synchronization successful!',
+                        style: TextStyle(color: textLightColour),
+                      ),
+                      backgroundColor: successColour,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Synchronization failed: $e',
+                        style: TextStyle(color: textLightColour),
+                      ),
+                      backgroundColor: errorColour,
+                    ),
+                  );
+                }
+              },
+              child: Text('Synchronize Codes'),
+            ),
+            const SizedBox(height: 32),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: errorColour,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -16,6 +18,20 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isProcessing = false;
   String? _scannedCode;
+  Timer? _syncTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    GlobalData.instance.fetchCodes();
+  }
+
+  void _scheduleSync() {
+    _syncTimer?.cancel();
+    _syncTimer = Timer(const Duration(seconds: 5), () async {
+      await syncCodes();
+    });
+  }
 
   void _handleCodeVerification() async {
     if (_isProcessing || _scannedCode == null) return;
@@ -29,8 +45,11 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context).clearSnackBars(); // Clear previous snackbar
 
     if (GlobalData.instance.codes.contains(code)) {
+      GlobalData.instance.invalidatedCodes.add(code);
       GlobalData.instance.codes.remove(code);
-      await GlobalData.instance.saveCodes(); // Save updated codes
+      await GlobalData.instance.saveCodes();
+
+      _scheduleSync();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

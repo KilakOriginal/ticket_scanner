@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ticket_scanner/localisation/locales.dart';
 import 'package:ticket_scanner/utils/constants.dart';
 import 'package:ticket_scanner/utils/global_data.dart';
@@ -9,6 +10,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await FlutterLocalization.instance.ensureInitialized();
+  debugPrint('Initialising Supabase...');
+  await Supabase.initialize(
+    url: "https://supabase.abdoulhamidou.com/",
+    anonKey:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE",
+  );
+  debugPrint('Supabase initialised.');
   await GlobalData.instance.loadCodes();
 
   runApp(const TicketScannerApp());
@@ -21,13 +29,31 @@ class TicketScannerApp extends StatefulWidget {
   State<TicketScannerApp> createState() => _TicketScannerAppState();
 }
 
-class _TicketScannerAppState extends State<TicketScannerApp> {
+class _TicketScannerAppState extends State<TicketScannerApp>
+    with WidgetsBindingObserver {
   final FlutterLocalization localisation = FlutterLocalization.instance;
 
   @override
   void initState() {
     configureLocalisation();
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    GlobalData.instance.startPeriodicSync();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    GlobalData.instance.stopPeriodicSync();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      syncCodes();
+    }
   }
 
   @override
