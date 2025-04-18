@@ -63,7 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['', 'txt', 'csv'],
+        allowedExtensions: ['txt', 'csv'],
       );
 
       if (result != null && result.files.single.path != null) {
@@ -92,18 +92,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
             throw Exception('Unsupported encoding type: $encoding');
         }
 
-        // Normalise and filter codes
-        List<String> codes =
+        // Normalize and filter codes
+        List<Map<String, dynamic>> codes =
             lines
                 .map((line) => line.trim())
                 .where((line) => RegExp(r'^[a-zA-Z0-9]+$').hasMatch(line))
-                .map((code) => _normaliseCode(code))
+                .map(
+                  (code) => {
+                    'code': _normaliseCode(code),
+                    'status': 'valid',
+                    'last_modified': DateTime.now().toUtc().toIso8601String(),
+                    'type': encoding,
+                  },
+                )
                 .toList();
 
         GlobalData.instance.codes = codes;
 
-        // Save the loaded data to shared preferences
         await GlobalData.instance.saveCodes();
+        GlobalData.instance.syncCodes();
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -241,7 +248,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               onPressed: () async {
                 try {
-                  await syncCodes();
+                  GlobalData.instance.syncCodes();
+                  debugPrint('Local codes: ${GlobalData.instance.codes}');
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -29,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _scheduleSync() {
     _syncTimer?.cancel();
     _syncTimer = Timer(const Duration(seconds: 5), () async {
-      await syncCodes();
+      GlobalData.instance.syncCodes();
     });
   }
 
@@ -44,10 +43,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
     ScaffoldMessenger.of(context).clearSnackBars(); // Clear previous snackbar
 
-    if (GlobalData.instance.codes.contains(code)) {
-      GlobalData.instance.invalidatedCodes.add(code);
-      GlobalData.instance.codes.remove(code);
+    Map<String, dynamic>? localCode = GlobalData.instance.codes.firstWhere(
+      (c) => c['code'] == code,
+    );
+
+    if (localCode['status'] == 'valid') {
+      localCode['status'] = 'invalid';
+      localCode['last_modified'] = DateTime.now().toUtc().toIso8601String();
+      debugPrint(
+        "Code '$code' is valid. Marking as invalid. Time: ${localCode['last_modified']}",
+      );
       await GlobalData.instance.saveCodes();
+      debugPrint("Local codes after saving: ${GlobalData.instance.codes}");
 
       _scheduleSync();
 

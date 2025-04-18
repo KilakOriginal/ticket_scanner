@@ -52,7 +52,7 @@ class _TicketScannerAppState extends State<TicketScannerApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
-      syncCodes();
+      GlobalData.instance.syncCodes();
     }
   }
 
