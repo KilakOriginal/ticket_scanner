@@ -32,9 +32,15 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!status.isGranted) {
       final result = await Permission.camera.request();
       if (!result.isGranted && mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('ERROR')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocaleData.noCameraPermission.getString(context),
+              style: const TextStyle(color: textLightColour, fontSize: 20),
+            ),
+            backgroundColor: errorColour,
+          ),
+        );
       }
     }
   }
@@ -48,8 +54,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _handleCodeVerification() async {
     debugPrint("Scanning code...");
-    if (_isProcessing || _scannedCode == null) {
-      debugPrint("Already processing or no code scanned.");
+    if (_isProcessing) {
+      debugPrint("Already processing.");
+      return;
+    }
+
+    if (_scannedCode == null) {
+      debugPrint("No code scanned.");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocaleData.noCode.getString(context),
+              style: const TextStyle(color: textLightColour, fontSize: 20),
+            ),
+            backgroundColor: errorColour,
+          ),
+        );
+      }
+      setState(() {
+        _isProcessing = false;
+        _scannedCode = null;
+      });
       return;
     }
 
@@ -61,9 +87,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
     ScaffoldMessenger.of(context).clearSnackBars(); // Clear previous snackbar
 
+    if (GlobalData.instance.codes.isEmpty) {
+      debugPrint("No codes available in local data.");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocaleData.noCodesAvailable.getString(context),
+              style: const TextStyle(color: textLightColour, fontSize: 20),
+            ),
+            backgroundColor: errorColour,
+          ),
+        );
+      }
+      setState(() {
+        _isProcessing = false;
+        _scannedCode = null;
+      });
+      return;
+    }
+
     Map<String, dynamic>? localCode = GlobalData.instance.codes.firstWhere(
       (c) => c['code'] == code,
+      orElse: () => <String, String>{},
     );
+
+    if (localCode.isEmpty) {
+      debugPrint("Code '$code' not found in local codes.");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocaleData.invalidCode.getString(context),
+              style: const TextStyle(color: textLightColour, fontSize: 20),
+            ),
+            backgroundColor: errorColour,
+          ),
+        );
+      }
+
+      setState(() {
+        _isProcessing = false;
+        _scannedCode = null;
+      });
+      return;
+    }
 
     if (localCode['status'] == 'valid') {
       localCode['status'] = 'invalid';
@@ -105,6 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           _isProcessing = false;
+          _scannedCode = null;
         });
       }
     });

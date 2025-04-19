@@ -3,6 +3,7 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ticket_scanner/localisation/locales.dart';
 import 'package:ticket_scanner/utils/constants.dart';
+import 'package:ticket_scanner/utils/global_data.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +23,21 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       if (response.user != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              LocaleData.loginSuccess.getString(context),
+              style: TextStyle(color: textLightColour),
+            ),
+            backgroundColor: successColour,
+          ),
+        );
+
+        GlobalData.instance.syncCodes();
+        GlobalData.instance.startPeriodicSync(
+          interval: const Duration(minutes: 1),
+        );
+
         Navigator.pop(context); // Close the login screen
       } else {
         if (mounted) {

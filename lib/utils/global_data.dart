@@ -44,6 +44,7 @@ class GlobalData {
         orElse: () => EncodingType.qr,
       );
     }
+    encodingType ??= EncodingType.ean13;
   }
 
   // Save codes to SharedPreferences
@@ -76,6 +77,7 @@ class GlobalData {
 
         Map<String, dynamic>? localCode = codes.firstWhere(
           (code) => code['code'] == remoteCodeValue,
+          orElse: () => <String, String>{},
         );
 
         DateTime localLastModifiedDate = DateTime.parse(

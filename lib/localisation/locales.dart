@@ -20,11 +20,14 @@ mixin LocaleData {
   static const String syncPrompt = 'syncPrompt';
   static const String loginPrompt = 'loginPrompt';
   static const String logoutPrompt = 'logoutPrompt';
+  static const String noCameraPermission = 'noCameraPermission';
 
   static const String loadFileSuccess = 'loadFileSuccess';
   static const String loadFileError = 'loadFileError';
   static const String validCode = 'validCode';
   static const String invalidCode = 'invalidCode';
+  static const String noCode = 'noCode';
+  static const String noCodesAvailable = 'noCodesAvailable';
   static const String clearDataWarning = 'clearDataWarning';
   static const String clearDataSuccess = 'clearDataSuccess';
   static const String overwriteDataWarning = 'overwriteDataWarning';
@@ -47,10 +50,14 @@ mixin LocaleData {
     syncPrompt: 'Synchronise Codes',
     loginPrompt: 'Login',
     logoutPrompt: 'Logout',
+    noCameraPermission:
+        'Camera permission denied. Please enable it in settings.',
     loadFileSuccess: 'Success! Loaded %a codes',
     loadFileError: 'Error loading file',
     validCode: 'Valid code!',
     invalidCode: 'Invalid code!',
+    noCode: 'No code found!',
+    noCodesAvailable: 'No codes available in local data.',
     clearDataWarning: 'Are you sure you want to clear all data?',
     clearDataSuccess: 'Data cleared successfully!',
     overwriteDataWarning:
@@ -75,10 +82,14 @@ mixin LocaleData {
     syncPrompt: 'Codes synchronisieren',
     loginPrompt: 'Anmelden',
     logoutPrompt: 'Abmelden',
+    noCameraPermission:
+        'Kameraberechtigung verweigert. Bitte aktivieren Sie sie in den Einstellungen.',
     loadFileSuccess: 'Erfolg! %a Codes geladen',
     loadFileError: 'Fehler beim Laden der Datei',
     validCode: 'Gültiger Code!',
     invalidCode: 'Ungültiger Code!',
+    noCode: 'Kein Code gefunden!',
+    noCodesAvailable: 'Keine Codes in den lokalen Daten verfügbar.',
     clearDataWarning: 'Sind Sie sicher, dass Sie alle Daten löschen möchten?',
     clearDataSuccess: 'Daten erfolgreich gelöscht!',
     overwriteDataWarning:
