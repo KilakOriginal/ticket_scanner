@@ -17,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isProcessing = false;
+  bool _isScanning = true;
   String? _scannedCode;
   Timer? _syncTimer;
   bool _hasCameraPermission = false;
@@ -66,6 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleCodeVerification() async {
+    ScaffoldMessenger.of(context).clearSnackBars();
+
     debugPrint("Scanning code...");
     if (_isProcessing) {
       debugPrint("Already processing.");
@@ -85,10 +88,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }
-      setState(() {
-        _isProcessing = false;
-        _scannedCode = null;
-      });
       return;
     }
 
@@ -97,8 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     String code = _normaliseCode(_scannedCode!);
-
-    ScaffoldMessenger.of(context).clearSnackBars(); // Clear previous snackbar
 
     if (GlobalData.instance.codes.isEmpty) {
       debugPrint("No codes available in local data.");
@@ -116,6 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _isProcessing = false;
         _scannedCode = null;
+        _isScanning = true;
       });
       return;
     }
@@ -138,10 +136,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }
-
       setState(() {
         _isProcessing = false;
         _scannedCode = null;
+        _isScanning = true;
       });
       return;
     }
@@ -187,6 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _isProcessing = false;
           _scannedCode = null;
+          _isScanning = true;
         });
       }
     });
@@ -199,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
     debugPrint(
       'Valid codes: ${GlobalData.instance.codes.map((c) => '"$c"').toList()}',
     );
-    // First digit is not encoded in the barcode, so the scanner will return a 7 or 12 digit code
+    // First digit is not read on some devices, so the scanner will return a 7 or 12 digit code
     final int length =
         GlobalData.instance.encodingType == EncodingType.ean8 ? 8 : 13;
 
@@ -241,11 +240,16 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_hasCameraPermission)
             MobileScanner(
               onDetect: (capture) {
+                if (!_isScanning || _isProcessing) {
+                  return;
+                }
                 for (final code in capture.barcodes) {
                   if (code.rawValue != null) {
                     setState(() {
                       _scannedCode = code.rawValue!;
+                      _isScanning = false;
                     });
+                    break;
                   }
                 }
               },
