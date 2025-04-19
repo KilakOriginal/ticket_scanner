@@ -19,29 +19,42 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isProcessing = false;
   String? _scannedCode;
   Timer? _syncTimer;
+  bool _hasCameraPermission = false;
 
   @override
   void initState() {
     super.initState();
-    _requestCameraPermission();
+    _checkCameraPermission();
     GlobalData.instance.fetchCodes();
   }
 
-  Future<void> _requestCameraPermission() async {
+  Future<void> _checkCameraPermission() async {
     final status = await Permission.camera.status;
-    if (!status.isGranted) {
-      final result = await Permission.camera.request();
-      if (!result.isGranted && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              LocaleData.noCameraPermission.getString(context),
-              style: const TextStyle(color: textLightColour, fontSize: 20),
-            ),
-            backgroundColor: errorColour,
+    if (status.isGranted) {
+      setState(() {
+        _hasCameraPermission = true;
+      });
+    } else {
+      _requestCameraPermission();
+    }
+  }
+
+  Future<void> _requestCameraPermission() async {
+    final result = await Permission.camera.request();
+    if (result.isGranted) {
+      setState(() {
+        _hasCameraPermission = true;
+      });
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            LocaleData.noCameraPermission.getString(context),
+            style: const TextStyle(color: textLightColour, fontSize: 20),
           ),
-        );
-      }
+          backgroundColor: errorColour,
+        ),
+      );
     }
   }
 
@@ -225,17 +238,26 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Stack(
         children: [
-          MobileScanner(
-            onDetect: (capture) {
-              for (final code in capture.barcodes) {
-                if (code.rawValue != null) {
-                  setState(() {
-                    _scannedCode = code.rawValue!;
-                  });
+          if (_hasCameraPermission)
+            MobileScanner(
+              onDetect: (capture) {
+                for (final code in capture.barcodes) {
+                  if (code.rawValue != null) {
+                    setState(() {
+                      _scannedCode = code.rawValue!;
+                    });
+                  }
                 }
-              }
-            },
-          ),
+              },
+            )
+          else
+            Center(
+              child: Text(
+                LocaleData.noCameraPermission.getString(context),
+                style: const TextStyle(color: textColour, fontSize: 18),
+                textAlign: TextAlign.center,
+              ),
+            ),
           Positioned(
             bottom: 100.0,
             left: 16.0,
