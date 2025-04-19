@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:ticket_scanner/localisation/locales.dart';
 import 'package:ticket_scanner/utils/constants.dart';
@@ -22,7 +23,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _requestCameraPermission();
     GlobalData.instance.fetchCodes();
+  }
+
+  Future<void> _requestCameraPermission() async {
+    final status = await Permission.camera.status;
+    if (!status.isGranted) {
+      final result = await Permission.camera.request();
+      if (!result.isGranted && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('ERROR')));
+      }
+    }
   }
 
   void _scheduleSync() {
@@ -33,7 +47,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleCodeVerification() async {
-    if (_isProcessing || _scannedCode == null) return;
+    debugPrint("Scanning code...");
+    if (_isProcessing || _scannedCode == null) {
+      debugPrint("Already processing or no code scanned.");
+      return;
+    }
 
     setState(() {
       _isProcessing = true;
@@ -100,13 +118,20 @@ class _HomeScreenState extends State<HomeScreen> {
       'Valid codes: ${GlobalData.instance.codes.map((c) => '"$c"').toList()}',
     );
     // First digit is not encoded in the barcode, so the scanner will return a 7 or 12 digit code
-    if ((GlobalData.instance.encodingType == EncodingType.ean8 &&
-            code.length == 7) ||
-        (GlobalData.instance.encodingType == EncodingType.ean13 &&
-            code.length == 12)) {
-      code = code.substring(0, code.length - 1); // Remove checksum
+    final int length =
+        GlobalData.instance.encodingType == EncodingType.ean8 ? 8 : 13;
+
+    if (code.length >= length) {
+      code = code.substring(
+        code.length - length + 1,
+        code.length - 1,
+      ); // Remove check digit
     }
+
     code = code.replaceFirst(RegExp(r'^0+'), ''); // Remove leading zeros
+
+    debugPrint('Normalised code: "$code" with length: ${code.length}');
+
     return code;
   }
 
