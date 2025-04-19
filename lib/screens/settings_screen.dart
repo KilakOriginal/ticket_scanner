@@ -32,6 +32,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     FlutterLocalization.instance.translate(languageCode);
   }
 
+  void _mutCombineUniqueCodes(
+    List<Map<String, dynamic>> existingCodes,
+    List<Map<String, dynamic>> newCodes,
+  ) {
+    for (var newCode in newCodes) {
+      bool exists = existingCodes.any(
+        (code) => code['code'] == newCode['code'],
+      );
+      if (!exists) {
+        existingCodes.add(newCode);
+      }
+    }
+  }
+
   Future<void> _loadFile() async {
     try {
       // Check if there is already data in shared preferences
@@ -107,7 +121,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 )
                 .toList();
 
-        GlobalData.instance.codes = codes;
+        _mutCombineUniqueCodes(GlobalData.instance.codes, codes);
 
         await GlobalData.instance.saveCodes();
         GlobalData.instance.syncCodes();
@@ -196,6 +210,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoggedIn = Supabase.instance.client.auth.currentUser != null;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -275,34 +291,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
               child: Text(LocaleData.syncPrompt.getString(context)),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColour,
-                foregroundColor: textLightColour,
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                );
-              },
-              child: Text(LocaleData.loginPrompt.getString(context)),
-            ),
             const SizedBox(height: 32),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: errorColour,
+                backgroundColor: isLoggedIn ? errorColour : primaryColour,
                 foregroundColor: textLightColour,
               ),
-              onPressed: () async {
-                await Supabase.instance.client.auth.signOut();
-                if (mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('Logged out')));
-                }
-              },
-              child: Text(LocaleData.logoutPrompt.getString(context)),
+              onPressed:
+                  isLoggedIn
+                      ? () async {
+                        await Supabase.instance.client.auth.signOut();
+                        if (mounted) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text('Logged out')));
+                        }
+                        setState(() {}); // Refresh UI after logout
+                      }
+                      : () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LoginScreen(),
+                          ),
+                        ).then((_) {
+                          setState(() {}); // Refresh UI after login
+                        });
+                      },
+              child: Text(
+                isLoggedIn
+                    ? LocaleData.logoutPrompt.getString(context)
+                    : LocaleData.loginPrompt.getString(context),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
