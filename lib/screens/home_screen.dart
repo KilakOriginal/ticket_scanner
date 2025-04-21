@@ -180,8 +180,13 @@ class _HomeScreenState extends State<HomeScreen> {
         GlobalData.instance.encodingType == EncodingType.ean8 ? 8 : 13;
     if (code.length >= length) {
       code = code.substring(code.length - length + 1, code.length - 1);
+    } else if (code.length == length - 1) {
+      code = code.substring(
+        0,
+        code.length - 1,
+      ); // On some platforms, the first digit is not scanned
     }
-    return code.replaceFirst(RegExp(r'^0+'), '');
+    return code.replaceFirst(RegExp(r'^0+'), ''); // Remove leading zeros
   }
 
   void _startScanning() {

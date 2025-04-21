@@ -141,6 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
       }
     } catch (e) {
+      debugPrint('Error loading file: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -195,17 +196,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   String _normaliseCode(String code) {
-    if ((GlobalData.instance.encodingType == EncodingType.ean8 &&
-            code.length == 8) ||
-        (GlobalData.instance.encodingType == EncodingType.ean13 &&
-            code.length == 13)) {
+    final int length =
+        GlobalData.instance.encodingType == EncodingType.ean8 ? 8 : 13;
+    if (code.length >= length) {
+      code = code.substring(code.length - length + 1, code.length - 1);
+    } else if (code.length == length - 1) {
       code = code.substring(
         1,
-        code.length - 1,
-      ); // Remove checksum and first digit
+        code.length,
+      ); // Assuming the checksum is not included
     }
-    code = code.replaceFirst(RegExp(r'^0+'), ''); // Remove leading zeros
-    return code;
+    return code.replaceFirst(RegExp(r'^0+'), ''); // Remove leading zeros
   }
 
   @override
