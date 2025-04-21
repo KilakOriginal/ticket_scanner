@@ -263,6 +263,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               onPressed: () async {
                 try {
+                  if (!isLoggedIn) {
+                    throw Exception(LocaleData.notLoggedIn.getString(context));
+                  }
+
                   await GlobalData.instance.syncCodes();
 
                   if (mounted) {
@@ -281,7 +285,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          LocaleData.syncError.getString(context),
+                          context.formatString(LocaleData.syncError, [
+                            e.toString(),
+                          ]),
                           style: TextStyle(color: textLightColour),
                         ),
                         backgroundColor: errorColour,

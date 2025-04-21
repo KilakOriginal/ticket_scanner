@@ -35,6 +35,7 @@ mixin LocaleData {
   static const String syncSuccess = 'syncSuccess';
   static const String loginError = 'loginError';
   static const String loginSuccess = 'loginSuccess';
+  static const String notLoggedIn = 'notLoggedIn';
 
   static const Map<String, dynamic> EN = {
     appTitle: 'Ticket Scanner',
@@ -62,10 +63,11 @@ mixin LocaleData {
     clearDataSuccess: 'Data cleared successfully!',
     overwriteDataWarning:
         'There is already data present in the app. Are you sure you want to continue?',
-    syncError: 'Error syncing data',
+    syncError: 'Error syncing data: %a',
     syncSuccess: 'Data synced successfully!',
     loginError: 'Login failed. Please check your credentials.',
     loginSuccess: 'Login successful!',
+    notLoggedIn: 'Not logged in.',
   };
 
   static const Map<String, dynamic> DE = {
@@ -94,10 +96,11 @@ mixin LocaleData {
     clearDataSuccess: 'Daten erfolgreich gelöscht!',
     overwriteDataWarning:
         'Es sind bereits Daten in der App vorhanden. Sind Sie sicher, dass Sie fortfahren möchten?',
-    syncError: 'Fehler beim Synchronisieren der Daten',
+    syncError: 'Fehler beim Synchronisieren der Daten: %a',
     syncSuccess: 'Daten erfolgreich synchronisiert!',
     loginError:
         'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldeinformationen.',
     loginSuccess: 'Anmeldung erfolgreich!',
+    notLoggedIn: 'Nicht angemeldet.',
   };
 }
