@@ -59,46 +59,8 @@ class GlobalData {
     }
   }
 
-  // Fetch codes from Supabase
-  Future<void> fetchCodes() async {
-    final response = await _supabase.from('codes').select();
-
-    if (codes.isEmpty) {
-      codes = List<Map<String, dynamic>>.from(response);
-      debugPrint("Fetched all remote codes: ${codes.length} codes loaded.");
-    } else {
-      final List<dynamic> fetchedCodes = response;
-      for (var remoteCode in fetchedCodes) {
-        String remoteCodeValue = remoteCode['code'];
-        String remoteStatus = remoteCode['status'];
-        String remoteLastModified = remoteCode['last_modified'];
-
-        DateTime remoteLastModifiedDate = DateTime.parse(remoteLastModified);
-
-        Map<String, dynamic>? localCode = codes.firstWhere(
-          (code) => code['code'] == remoteCodeValue,
-          orElse: () => <String, String>{},
-        );
-
-        DateTime localLastModifiedDate = DateTime.parse(
-          localCode['last_modified'],
-        );
-
-        if (remoteLastModifiedDate.isAfter(localLastModifiedDate)) {
-          debugPrint("Updating local code $remoteCodeValue");
-          localCode['status'] = remoteStatus;
-          localCode['last_modified'] = remoteLastModifiedDate.toIso8601String();
-        }
-      }
-    }
-
-    await saveCodes();
-  }
-
-  // Push local changes to Supabase
-  Future<void> pushCodesToDatabase() async {
-    for (var localCode in codes) {
-      // Check if the remote code exists and fetch its last_modified timestamp
+  Future<void> syncCodes() async {
+    await Future.forEach(codes, (localCode) async {
       final response =
           await _supabase
               .from('codes')
@@ -107,11 +69,11 @@ class GlobalData {
               .maybeSingle();
 
       if (response == null) {
-        // Code does not exist in the remote database, insert it
+        // Code does not exist in Supabase, insert it
         await _supabase.from('codes').insert(localCode);
       } else {
-        DateTime remoteLastModified = DateTime.parse(response['last_modified']);
-        DateTime localLastModified = DateTime.parse(localCode['last_modified']);
+        final remoteLastModified = DateTime.parse(response['last_modified']);
+        final localLastModified = DateTime.parse(localCode['last_modified']);
 
         if (localLastModified.isAfter(remoteLastModified)) {
           debugPrint("Updating code ${localCode['code']}");
@@ -125,11 +87,33 @@ class GlobalData {
           );
         }
       }
-    }
-  }
+    });
 
-  Future<void> syncCodes() async {
-    await pushCodesToDatabase();
-    await fetchCodes();
+    // Fetch and merge remote codes
+    final fetchedCodes = await _supabase.from('codes').select();
+
+    for (var remoteCode in fetchedCodes) {
+      final remoteLastModified = DateTime.parse(remoteCode['last_modified']);
+      final localCode = codes.firstWhere(
+        (code) => code['code'] == remoteCode['code'],
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (localCode.isEmpty) {
+        codes.add(remoteCode);
+        debugPrint("Added new remote code ${remoteCode['code']}");
+      } else {
+        final localLastModified = DateTime.parse(localCode['last_modified']);
+        if (remoteLastModified.isAfter(localLastModified)) {
+          // Update local code with remote changes
+          debugPrint("Updating local code ${remoteCode['code']}");
+          localCode['status'] = remoteCode['status'];
+          localCode['last_modified'] = remoteLastModified.toIso8601String();
+        }
+      }
+    }
+
+    // Save updated codes to local storage
+    await saveCodes();
   }
 }

@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _checkCameraPermission();
-    GlobalData.instance.fetchCodes();
+    GlobalData.instance.syncCodes();
   }
 
   Future<void> _checkCameraPermission() async {
