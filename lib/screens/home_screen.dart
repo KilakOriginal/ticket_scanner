@@ -16,6 +16,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final MobileScannerController _mobileScannerController =
+      MobileScannerController();
   bool _isProcessing = false;
   bool _isScanning = false;
   String? _scannedCode;
@@ -189,8 +191,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return code.replaceFirst(RegExp(r'^0+'), ''); // Remove leading zeros
   }
 
-  void _startScanning() {
+  void _startScanning() async {
     ScaffoldMessenger.of(context).clearSnackBars();
+
+    if (GlobalData.instance.isFlashEnabled) {
+      _mobileScannerController.toggleTorch();
+      await Future.delayed(const Duration(milliseconds: 800));
+    }
 
     setState(() {
       _scannedCode = null;
@@ -219,6 +226,10 @@ class _HomeScreenState extends State<HomeScreen> {
           _isScanning = false;
         });
       }
+
+      if (GlobalData.instance.isFlashEnabled) {
+        _mobileScannerController.toggleTorch();
+      }
     });
   }
 
@@ -244,7 +255,10 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Stack(
         children: [
           if (_hasCameraPermission)
-            MobileScanner(onDetect: _onDetect)
+            MobileScanner(
+              controller: _mobileScannerController,
+              onDetect: _onDetect,
+            )
           else
             Center(
               child: Text(

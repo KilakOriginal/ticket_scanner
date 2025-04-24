@@ -13,6 +13,7 @@ class GlobalData {
 
   List<Map<String, dynamic>> codes = [];
   EncodingType? encodingType;
+  bool isFlashEnabled = false;
 
   final SupabaseClient _supabase = Supabase.instance.client;
   Timer? _periodicSyncTimer;

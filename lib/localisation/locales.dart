@@ -10,6 +10,8 @@ mixin LocaleData {
   static const String settingsTitle = 'settingsTitle';
   static const String passwordTitle = 'passwordTitle';
   static const String emailTitle = 'emailTitle';
+  static const String flashOff = 'flashOff';
+  static const String flashOn = 'flashOn';
 
   static const String scanCode = 'scanCode';
   static const String loadFile = 'loadFile';
@@ -42,6 +44,8 @@ mixin LocaleData {
     settingsTitle: 'Settings',
     passwordTitle: 'Password',
     emailTitle: 'Email',
+    flashOff: 'Disable Flsh',
+    flashOn: 'Enable Flash',
     scanCode: 'Scan Code',
     loadFile: 'Load File',
     cancel: 'Cancel',
@@ -75,6 +79,8 @@ mixin LocaleData {
     settingsTitle: 'Einstellungen',
     passwordTitle: 'Passwort',
     emailTitle: 'E-Mail',
+    flashOff: 'Blitz ausschalten',
+    flashOn: 'Blitz einschalten',
     scanCode: 'Code scannen',
     loadFile: 'Datei laden',
     cancel: 'Abbrechen',

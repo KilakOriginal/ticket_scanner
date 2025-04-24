@@ -261,6 +261,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 backgroundColor: primaryColour,
                 foregroundColor: textLightColour,
               ),
+              onPressed: () {
+                setState(() {
+                  GlobalData.instance.isFlashEnabled =
+                      !GlobalData.instance.isFlashEnabled;
+                });
+              },
+              child: Text(
+                GlobalData.instance.isFlashEnabled
+                    ? LocaleData.flashOff.getString(context)
+                    : LocaleData.flashOn.getString(context),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColour,
+                foregroundColor: textLightColour,
+              ),
               onPressed: () async {
                 try {
                   if (!isLoggedIn) {
